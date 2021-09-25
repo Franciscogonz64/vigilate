@@ -35,6 +35,15 @@ func (m *postgresDBRepo) InsertHost(h models.Host) (int, error) {
 		log.Println(err)
 		return newID, err
 	}
+	// add host services and set to inactive
+	stmt := `
+		insert into host_services (host_id, service_id, active, schedule_number, schedule_unit,
+		status, created_at, updated_at) values ($1, 1, 0, 3,'m', 'pending', $2, $3)
+	`
+	_, err = m.DB.ExecContext(ctx, stmt, newID, time.Now(), time.Now())
+	if err != nil {
+		return newID, err
+	}
 	return newID, nil
 }
 
@@ -145,4 +154,20 @@ func (m *postgresDBRepo) AllHosts() ([]models.Host, error) {
 		return nil, err
 	}
 	return hosts, nil
+}
+
+// UpdateHostServiceStatus updates the active status of a host service
+func (m *postgresDBRepo) UpdateHostServiceStatus(hostID, serviceID, active int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	stmt := `
+		update host_services set active = $1 where host_id = $2 and service_id = $3
+	`
+	_, err := m.DB.ExecContext(ctx, stmt, active, hostID, serviceID)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
