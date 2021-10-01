@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/tsawler/vigilate/internal/models"
 )
 
@@ -28,6 +28,11 @@ type jsonResp struct {
 	OldStatus     string    `json:"old_status"`
 	NewStatus     string    `json:"new_status"`
 	LastCheck     time.Time `json:"last_check"`
+}
+
+// ScheduleCheck performs a scheduled check on a host service by id
+func (repo *DBRepo) ScheduleCheck(hostServiceID int) {
+
 }
 
 func (repo *DBRepo) TestCheck(w http.ResponseWriter, r *http.Request) {
