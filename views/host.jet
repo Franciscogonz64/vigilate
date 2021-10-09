@@ -420,7 +420,7 @@ Host
                         })
                         } else {
                             attention.toast({
-                            msg: "Service is still in" + data.new_status + "state",
+                            msg: "Service is still in " + data.new_status + " state",
                             icon: "info",
                             timer: 5000,
                             showCloseButton: true,
