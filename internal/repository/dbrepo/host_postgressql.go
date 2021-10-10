@@ -241,7 +241,7 @@ func (m *postgresDBRepo) AllHosts() ([]models.Host, error) {
 						select 
 							hs.id, hs.host_id, hs.service_id, hs.active, hs.schedule_number, hs.schedule_unit,
 							hs.last_check, hs.status, hs.created_at, hs.updated_at,
-							s.id, s.service_name, s.active, s.icon, s.created_at, s.updated_at
+							s.id, s.service_name, s.active, s.icon, s.created_at, s.updated_at, hs.last_message
 						from 
 							host_services hs
 							left join services s on (s.id = hs.service_id)
@@ -275,6 +275,7 @@ func (m *postgresDBRepo) AllHosts() ([]models.Host, error) {
 				&hs.Service.Icon,
 				&hs.Service.CreatedAt,
 				&hs.Service.UpdatedAt,
+				&hs.LastMessage,
 			)
 			if err != nil {
 				log.Println(err)
@@ -319,9 +320,9 @@ func (m *postgresDBRepo) UpdateHostService(hs models.HostService) error {
 		set 
 			host_id = $1, service_id = $2, active = $3,
 			schedule_number = $4, schedule_unit = $5,
-			last_check = $6, status = $7, updated_at = $8
+			last_check = $6, status = $7, updated_at = $8, last_message = $9
 		where 
-			id = $9`
+			id = $10`
 
 	_, err := m.DB.ExecContext(ctx, stmt,
 		hs.HostID,
@@ -332,6 +333,7 @@ func (m *postgresDBRepo) UpdateHostService(hs models.HostService) error {
 		hs.LastCheck,
 		hs.Status,
 		hs.UpdatedAt,
+		hs.LastMessage,
 		hs.ID,
 	)
 	if err != nil {
@@ -340,6 +342,7 @@ func (m *postgresDBRepo) UpdateHostService(hs models.HostService) error {
 	return nil
 }
 
+// GetServicesByStatus returns all active services with a given status
 func (m *postgresDBRepo) GetServicesByStatus(status string) ([]models.HostService, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -348,7 +351,7 @@ func (m *postgresDBRepo) GetServicesByStatus(status string) ([]models.HostServic
 		select 
 			hs.id, hs.host_id, hs.service_id, hs.active, hs.schedule_number, hs.schedule_unit,
 			hs.last_check, hs.status, hs.created_at, hs.updated_at,
-			h.host_name, s.service_name
+			h.host_name, s.service_name, hs.last_message
 		from 
 			host_services hs 
 			left join hosts h on (hs.host_id = h.id)
@@ -382,6 +385,7 @@ func (m *postgresDBRepo) GetServicesByStatus(status string) ([]models.HostServic
 			&h.UpdatedAt,
 			&h.HostName,
 			&h.Service.ServiceName,
+			&h.LastMessage,
 		)
 		if err != nil {
 			return nil, err
@@ -399,7 +403,8 @@ func (m *postgresDBRepo) GetHostServiceByID(id int) (models.HostService, error) 
 		select
 			hs.id, hs.host_id, hs.service_id, hs.active, hs.schedule_number,
 			hs.schedule_unit, hs.last_check, hs.status, hs.created_at, hs.updated_at,
-			s.id, s.service_name, s.active, s.icon, s.created_at, s.updated_at, h.host_name
+			s.id, s.service_name, s.active, s.icon, s.created_at, s.updated_at, h.host_name,
+			hs.last_message
 		
 		from
 			host_services hs
@@ -431,6 +436,7 @@ func (m *postgresDBRepo) GetHostServiceByID(id int) (models.HostService, error) 
 		&hs.Service.CreatedAt,
 		&hs.Service.UpdatedAt,
 		&hs.HostName,
+		&hs.LastMessage,
 	)
 
 	if err != nil {
@@ -449,7 +455,7 @@ func (m *postgresDBRepo) GetServicesToMonitor() ([]models.HostService, error) {
 			hs.id, hs.host_id, hs.service_id, hs.active, hs.schedule_number,
 			hs.schedule_unit, hs.last_check, hs.status, hs.created_at, hs.updated_at,
 			s.id, s.service_name, s.active, s.icon, s.created_at, s.updated_at,
-			h.host_name
+			h.host_name, hs.last_message
 
 		from
 			host_services hs
@@ -487,6 +493,7 @@ func (m *postgresDBRepo) GetServicesToMonitor() ([]models.HostService, error) {
 			&h.Service.CreatedAt,
 			&h.Service.UpdatedAt,
 			&h.HostName,
+			&h.LastMessage,
 		)
 		if err != nil {
 			log.Println(err)
@@ -506,7 +513,8 @@ func (m *postgresDBRepo) GetHostServiceByHostIDServiceID(hostID, serviceID int) 
 		select
 			hs.id, hs.host_id, hs.service_id, hs.active, hs.schedule_number, hs.schedule_unit, 
 			hs.last_check, hs.status, hs.created_at, hs.updated_at,
-			s.id, s.service_name, s.active, s.icon, s.created_at, s.updated_at, h.host_name
+			s.id, s.service_name, s.active, s.icon, s.created_at, s.updated_at, h.host_name,
+			hs.last_message
 		from
 			host_services hs
 			left join services s on (hs.service_id = s.id)
@@ -536,6 +544,7 @@ func (m *postgresDBRepo) GetHostServiceByHostIDServiceID(hostID, serviceID int) 
 		&hs.Service.CreatedAt,
 		&hs.Service.UpdatedAt,
 		&hs.HostName,
+		&hs.LastMessage,
 	)
 
 	if err != nil {
