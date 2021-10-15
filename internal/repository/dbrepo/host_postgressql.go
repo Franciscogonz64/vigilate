@@ -41,7 +41,7 @@ func (m *postgresDBRepo) InsertHost(h models.Host) (int, error) {
 		return newID, err
 	}
 	// add host services and set to inactive
-	query = `select if from services`
+	query = `select id from services`
 	serviceRows, err := m.DB.QueryContext(ctx, query)
 	if err != nil {
 		log.Println(err)
@@ -50,22 +50,21 @@ func (m *postgresDBRepo) InsertHost(h models.Host) (int, error) {
 	defer serviceRows.Close()
 
 	for serviceRows.Next() {
-		var scvID int
-		err := serviceRows.Scan(&scvID)
+		var svcID int
+		err := serviceRows.Scan(&svcID)
 		if err != nil {
 			log.Println(err)
 			return 0, err
 		}
 
 		stmt := `
-		insert 
-			into host_services 
+		insert into host_services 
 			(host_id, service_id, active, schedule_number, 
 			schedule_unit, status, created_at, updated_at) 
 		values 
 			($1, $2, 0, 3,'m', 'pending', $3, $4)`
 
-		_, err = m.DB.ExecContext(ctx, stmt, newID, scvID, time.Now(), time.Now())
+		_, err = m.DB.ExecContext(ctx, stmt, newID, svcID, time.Now(), time.Now())
 		if err != nil {
 			return newID, err
 		}
