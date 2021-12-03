@@ -1,11 +1,13 @@
-#!/bin/zsh
+#!/bin/sh
 
 # This is the bare minimum to run in development. For full list of flags,
 # run ./vigilate -help
 
-go build -o vigilate cmd/web/*.go && ./vigilate \
+./cmd/web/vigilate \
 -dbuser='frankie' \
--pusherHost='localhost' \
+-dbpass='password' \
+-dbhost='db' \
+-pusherHost='ipe' \
 -pusherKey='abc123' \
 -pusherSecret='123abc' \
 -pusherApp="1" \
