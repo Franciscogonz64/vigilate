@@ -1,0 +1,29 @@
+version: '3'
+services:
+  db:
+    image: postgres:13
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: frankie
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: vigilate
+    volumes:
+      - db:/var/lib/postgresql
+  # TODO: Figure out how to run all the migrations for the DB.
+  migrator:
+    image: gobuffalo/buffalo
+    depends_on:
+      - db
+    volumes:
+      - ./migrations:/wherever/you/wanna/put/em
+  ipe:
+    image: crossworth/ipe-server
+    volumes:
+      - type: bind
+        source: ./ipe/config.yml
+        target: /home/config.yml
+    ports:
+      - "4001:4001"
+volumes:
+  db: { }
